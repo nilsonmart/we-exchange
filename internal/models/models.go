@@ -3,30 +3,30 @@ package models
 import "time"
 
 type Schema struct {
-	ID             string
+	ID             int64
 	WeekDay        string
-	CreationDate   int64
-	CreationUserID string
-	UpdateDate     int64
-	UpdateUserID   string
+	CreationDate   time.Time
+	CreationUserID int64
+	UpdateDate     time.Time
+	UpdateUserID   int64
 }
 
 type Account struct {
-	ID       string
+	ID       int64
 	Name     string
 	Email    string
 	Password string
 }
 
 type Activity struct {
-	ID             string
+	ID             int64
 	OldDate        time.Time
 	NewDate        time.Time
 	Paid           string
 	Approved       string
 	UserID         string
-	CreationDate   int64
-	CreationUserID string
-	UpdateDate     int64
-	UpdateUserID   string
+	CreationDate   time.Time
+	CreationUserID int64
+	UpdateDate     time.Time
+	UpdateUserID   int64
 }

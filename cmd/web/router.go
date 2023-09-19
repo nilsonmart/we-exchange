@@ -35,7 +35,7 @@ func router() *gin.Engine {
 				c.JSON(http.StatusInternalServerError, gin.H{"message": "Error when creating token"})
 				return
 			}
-
+			c.SetCookie("userid", "id", int(expToken), "/", "localhost", false, true)
 			c.SetCookie("token", tokenString, int(expToken), "/", "localhost", false, true)
 
 			//c.JSON(http.StatusOK, gin.H{"token": tokenString})
