@@ -276,7 +276,7 @@ func (r *SQLiteRepository) UpdateSchema(id int64, updated models.Schema) (*model
 }
 
 func (r *SQLiteRepository) DeleteSchema(id int64) error {
-	res, err := r.db.Exec("DELETE FROM Activity WHERE id = ?", id)
+	res, err := r.db.Exec("DELETE FROM Schema WHERE id = ?", id)
 	if err != nil {
 		return err
 	}
