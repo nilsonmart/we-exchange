@@ -5,6 +5,7 @@ import "time"
 type Schema struct {
 	ID             int64
 	WeekDay        string
+	UserID         int64
 	CreationDate   time.Time
 	CreationUserID int64
 	UpdateDate     time.Time
@@ -22,9 +23,9 @@ type Activity struct {
 	ID             int64
 	OldDate        time.Time
 	NewDate        time.Time
-	Paid           string
-	Approved       string
-	UserID         string
+	Paid           int32
+	Approved       int32
+	UserID         int64
 	CreationDate   time.Time
 	CreationUserID int64
 	UpdateDate     time.Time
