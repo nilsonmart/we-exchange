@@ -23,8 +23,8 @@ type Activity struct {
 	ID             int64
 	OldDate        time.Time
 	NewDate        time.Time
-	Paid           int32
-	Approved       int32
+	Paid           bool
+	Approved       bool
 	UserID         int64
 	CreationDate   time.Time
 	CreationUserID int64
