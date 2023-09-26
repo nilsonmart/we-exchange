@@ -10,17 +10,25 @@ import (
 	"github.com/nilsonmart/we-exchange/internal/repository"
 )
 
-var rp = repository.NewSQLiteRepository(connectionSQLite())
-
 func initSQLite() {
-	if err := rp.MigrateActivity(); err != nil {
+
+	repo := repository.NewSQLiteRepository(connectionSQLite())
+
+	if err := repo.MigrateActivity(); err != nil {
 		//TODO Log error
 		log.Fatal(err)
 	}
 
-	if err := rp.MigrateSchema(); err != nil {
+	if err := repo.MigrateSchema(); err != nil {
 		//TODO Log error
 		log.Fatal(err)
+	}
+
+	for _, v := range mockActivity() {
+		_, err := repo.CreateActivity(v)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 }

@@ -8,7 +8,7 @@ import (
 
 const fileName = "weexchange.db"
 
-func connectionSQLite() *sql.DB {
+func ConnectionSQLite() *sql.DB {
 
 	os.Remove(fileName)
 

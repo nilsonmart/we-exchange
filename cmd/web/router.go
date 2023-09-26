@@ -52,6 +52,11 @@ func router() *gin.Engine {
 		c.HTML(http.StatusOK, "home.html", nil)
 	})
 
+	r.GET("/schema", authMiddleware(), func(ctx *gin.Context) {
+		model := getSchema()
+		ctx.JSON(http.StatusOK, model)
+	})
+
 	//Route to render a template
 	r.GET("/", func(c *gin.Context) {
 		tokenString, err := c.Cookie("token")
