@@ -3,11 +3,14 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"log"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mattn/go-sqlite3"
+
 	"github.com/nilsonmart/we-exchange/internal/models"
 )
 
@@ -42,6 +45,114 @@ func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
 	return &SQLiteRepository{
 		db: db,
 	}
+}
+
+// ACCOUNT
+func (r *SQLiteRepository) MigrateAccount() error {
+	query := `
+    CREATE TABLE IF NOT EXISTS Account(
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        Name TEXT NOT NULL,
+        Email TEXT NOT NULL,
+        Password NUMERIC NOT NULL
+    );
+    `
+	_, err := r.db.Exec(query)
+	return err
+}
+
+func (r *SQLiteRepository) CreateAccount(account models.Account) (*models.Account, error) {
+	res, err := r.db.Exec("INSERT INTO Account(Name, Email, Password) values(?,?,?)",
+		account.Name, account.Email, account.Password)
+	if err != nil {
+		var sqliteErr sqlite3.Error
+		if errors.As(err, &sqliteErr) {
+			if errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintUnique) {
+				return nil, ErrDuplicate
+			}
+		}
+		return nil, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	account.ID = id
+
+	return &account, nil
+}
+
+func (r *SQLiteRepository) AllAccount() ([]models.Account, error) {
+	rows, err := r.db.Query("SELECT * FROM Account")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var all []models.Account
+	for rows.Next() {
+		var accounts models.Account
+		if err := rows.Scan(&accounts.ID, &accounts.Name, &accounts.Email, &accounts.Password); err != nil {
+			return nil, err
+		}
+		all = append(all, accounts)
+	}
+	return all, nil
+}
+
+func (r *SQLiteRepository) GetAccountByID(id int64) (*models.Account, error) {
+	row := r.db.QueryRow("SELECT * FROM Account WHERE ID = ?", id)
+
+	var account models.Account
+	if err := row.Scan(&account.ID, &account.Name, &account.Email, &account.Password); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotExists
+		}
+		return nil, err
+	}
+	return &account, nil
+}
+
+func (r *SQLiteRepository) GetAccountByEmail(email string) (*models.Account, error) {
+	row := r.db.QueryRow("SELECT * FROM Account WHERE Email = ?", email)
+	fmt.Println(row)
+
+	var account models.Account
+	if err := row.Scan(&account.ID, &account.Name, &account.Email, &account.Password); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			fmt.Println(err)
+			return nil, ErrNotExists
+		}
+		return nil, err
+	}
+	return &account, nil
+}
+
+func (r *SQLiteRepository) ValidateAccount(email, password string) (bool, error) {
+	if email == "" || password == "" {
+		//TODO Log error
+		log.Fatal("Email or Password invalid.")
+		return false, errors.New("Email or Password invalid.")
+	}
+
+	row := r.db.QueryRow("SELECT * FROM Account WHERE Email = ? AND Password = ?", email, password)
+
+	var account models.Account
+	if err := row.Scan(&account.ID, &account.Name, &account.Email, &account.Password); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			//TODO Log error
+			log.Fatal(ErrNotExists)
+			return false, ErrNotExists
+		}
+
+		//TODO Log error
+		log.Fatal(err)
+
+		return false, err
+	}
+
+	return true, ErrNotExists
 }
 
 // ACTIVITY

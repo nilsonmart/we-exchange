@@ -10,9 +10,16 @@ import (
 	"github.com/nilsonmart/we-exchange/internal/repository"
 )
 
-func initSQLite() {
+func InitSQLite() {
 
-	repo := repository.NewSQLiteRepository(connectionSQLite())
+	conn := ConnectionSQLite()
+
+	repo := repository.NewSQLiteRepository(conn)
+
+	if err := repo.MigrateAccount(); err != nil {
+		//TODO Log error
+		log.Fatal(err)
+	}
 
 	if err := repo.MigrateActivity(); err != nil {
 		//TODO Log error

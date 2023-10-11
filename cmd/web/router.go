@@ -21,7 +21,14 @@ func router() *gin.Engine {
 
 		//check credentials
 		//TODO - REAL AUTHENTICATION VALIDATION
-		if email == "teste@teste.com" && password == "teste" {
+		account, err := ValidateAccount(email, password)
+		if err != nil {
+			//c.AbortWithStatus(http.StatusBadRequest)
+			//c.Redirect(http.StatusNotFound, "/")
+			c.HTML(http.StatusUnauthorized, "login.html", nil)
+		}
+
+		if account {
 			expToken := time.Now().Add(time.Hour * 24).Unix()
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 				"email": email,
