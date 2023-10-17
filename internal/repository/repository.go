@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -10,7 +11,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mattn/go-sqlite3"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"github.com/nilsonmart/we-exchange/internal/driver"
 	"github.com/nilsonmart/we-exchange/internal/models"
 )
 
@@ -23,6 +26,14 @@ var (
 
 type SQLiteRepository struct {
 	db *sql.DB
+}
+
+func queryObjectData(schema, key, value string) ([]byte, error) {
+	query, err := driver.QueryObject(schema, &models.DBQuery{Key: key, Value: value})
+	if err != nil {
+		return nil, err
+	}
+	return query, err
 }
 
 func getUserId() int64 {
@@ -48,18 +59,18 @@ func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
 }
 
 // ACCOUNT
-func (r *SQLiteRepository) MigrateAccount() error {
-	query := `
-    CREATE TABLE IF NOT EXISTS Account(
-        ID INTEGER PRIMARY KEY AUTOINCREMENT,
-        Name TEXT NOT NULL,
-        Email TEXT NOT NULL,
-        Password NUMERIC NOT NULL
-    );
-    `
-	_, err := r.db.Exec(query)
-	return err
-}
+// func (r *SQLiteRepository) MigrateAccount() error {
+// 	query := `
+//     CREATE TABLE IF NOT EXISTS Account(
+//         ID INTEGER PRIMARY KEY AUTOINCREMENT,
+//         Name TEXT NOT NULL,
+//         Email TEXT NOT NULL,
+//         Password NUMERIC NOT NULL
+//     );
+//     `
+// 	_, err := r.db.Exec(query)
+// 	return err
+// }
 
 func (r *SQLiteRepository) CreateAccount(account models.Account) (*models.Account, error) {
 	res, err := r.db.Exec("INSERT INTO Account(Name, Email, Password) values(?,?,?)",
@@ -101,7 +112,28 @@ func (r *SQLiteRepository) AllAccount() ([]models.Account, error) {
 	return all, nil
 }
 
-func (r *SQLiteRepository) GetAccountByID(id int64) (*models.Account, error) {
+func (r *SQLiteRepository) GetAccountByID(userId string) (*models.Account, error) {
+
+	docID, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("HomePageHandler ObjectID - %v", docID)
+
+	query, err := queryObjectData("schema", "_userid", userId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNotExists
+	}
+
+	var schema models.Schema
+	err = json.Unmarshal(query, &schema)
+	if err != nil {
+		//Log error
+		fmt.Println("Error when unmashalling SchemaDB")
+		return nil, err
+	}
+
 	row := r.db.QueryRow("SELECT * FROM Account WHERE ID = ?", id)
 
 	var account models.Account
@@ -155,10 +187,10 @@ func (r *SQLiteRepository) ValidateAccount(email, password string) (bool, error)
 	return true, ErrNotExists
 }
 
-// ACTIVITY
-func (r *SQLiteRepository) MigrateActivity() error {
+// RequestChange
+func (r *SQLiteRepository) MigrateRequestChange() error {
 	query := `
-    CREATE TABLE IF NOT EXISTS Activity(
+    CREATE TABLE IF NOT EXISTS RequestChange(
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         OldDate TEXT NOT NULL,
         NewDate TEXT NOT NULL,
@@ -176,9 +208,9 @@ func (r *SQLiteRepository) MigrateActivity() error {
 	return err
 }
 
-func (r *SQLiteRepository) CreateActivity(activity models.Activity) (*models.Activity, error) {
-	res, err := r.db.Exec("INSERT INTO Activity(OldDate, NewDate, Paid, Approved, UserID, CreationDate, CreationUserID, UpdateDate, UpdateUserID) values(?,?,?,?,?,?,?,?,?)",
-		activity.OldDate, activity.NewDate, activity.Paid, activity.Approved, getUserId(), time.Now(), getUserId(), nil, nil)
+func (r *SQLiteRepository) CreateRequestChange(RequestChange models.RequestChange) (*models.RequestChange, error) {
+	res, err := r.db.Exec("INSERT INTO RequestChange(OldDate, NewDate, Paid, Approved, UserID, CreationDate, CreationUserID, UpdateDate, UpdateUserID) values(?,?,?,?,?,?,?,?,?)",
+		RequestChange.OldDate, RequestChange.NewDate, RequestChange.Paid, RequestChange.Approved, getUserId(), time.Now(), getUserId(), nil, nil)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {
@@ -193,60 +225,60 @@ func (r *SQLiteRepository) CreateActivity(activity models.Activity) (*models.Act
 	if err != nil {
 		return nil, err
 	}
-	activity.ID = id
+	RequestChange.ID = id
 
-	return &activity, nil
+	return &RequestChange, nil
 }
 
-func (r *SQLiteRepository) AllActivity() ([]models.Activity, error) {
-	rows, err := r.db.Query("SELECT * FROM Activity")
+func (r *SQLiteRepository) AllRequestChange() ([]models.RequestChange, error) {
+	rows, err := r.db.Query("SELECT * FROM RequestChange")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var all []models.Activity
+	var all []models.RequestChange
 	for rows.Next() {
-		var activity models.Activity
-		if err := rows.Scan(&activity.ID, &activity.OldDate, &activity.NewDate, &activity.Paid, &activity.Approved, &activity.UserID, &activity.CreationDate, &activity.CreationUserID, &activity.UpdateDate, &activity.UpdateUserID); err != nil {
+		var RequestChange models.RequestChange
+		if err := rows.Scan(&RequestChange.ID, &RequestChange.OldDate, &RequestChange.NewDate, &RequestChange.Paid, &RequestChange.Approved, &RequestChange.UserID, &RequestChange.CreationDate, &RequestChange.CreationUserID, &RequestChange.UpdateDate, &RequestChange.UpdateUserID); err != nil {
 			return nil, err
 		}
-		all = append(all, activity)
+		all = append(all, RequestChange)
 	}
 	return all, nil
 }
 
-func (r *SQLiteRepository) GetActivityByID(id int64) (*models.Activity, error) {
-	row := r.db.QueryRow("SELECT * FROM Activity WHERE ID = ?", id)
+func (r *SQLiteRepository) GetRequestChangeByID(id int64) (*models.RequestChange, error) {
+	row := r.db.QueryRow("SELECT * FROM RequestChange WHERE ID = ?", id)
 
-	var activity models.Activity
-	if err := row.Scan(&activity.ID, &activity.OldDate, &activity.NewDate, &activity.Paid, &activity.Approved, &activity.UserID, &activity.CreationDate, &activity.CreationUserID, &activity.UpdateDate, &activity.UpdateUserID); err != nil {
+	var RequestChange models.RequestChange
+	if err := row.Scan(&RequestChange.ID, &RequestChange.OldDate, &RequestChange.NewDate, &RequestChange.Paid, &RequestChange.Approved, &RequestChange.UserID, &RequestChange.CreationDate, &RequestChange.CreationUserID, &RequestChange.UpdateDate, &RequestChange.UpdateUserID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotExists
 		}
 		return nil, err
 	}
-	return &activity, nil
+	return &RequestChange, nil
 }
 
-func (r *SQLiteRepository) GetActivityByUserID(userId int64) (*models.Activity, error) {
-	row := r.db.QueryRow("SELECT * FROM Activity WHERE UserID = ?", userId)
+func (r *SQLiteRepository) GetRequestChangeByUserID(userId int64) (*models.RequestChange, error) {
+	row := r.db.QueryRow("SELECT * FROM RequestChange WHERE UserID = ?", userId)
 
-	var activity models.Activity
-	if err := row.Scan(&activity.ID, &activity.OldDate, &activity.NewDate, &activity.Paid, &activity.Approved, &activity.UserID, &activity.CreationDate, &activity.CreationUserID, &activity.UpdateDate, &activity.UpdateUserID); err != nil {
+	var RequestChange models.RequestChange
+	if err := row.Scan(&RequestChange.ID, &RequestChange.OldDate, &RequestChange.NewDate, &RequestChange.Paid, &RequestChange.Approved, &RequestChange.UserID, &RequestChange.CreationDate, &RequestChange.CreationUserID, &RequestChange.UpdateDate, &RequestChange.UpdateUserID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotExists
 		}
 		return nil, err
 	}
-	return &activity, nil
+	return &RequestChange, nil
 }
 
-func (r *SQLiteRepository) UpdateActivity(id int64, updated models.Activity) (*models.Activity, error) {
+func (r *SQLiteRepository) UpdateRequestChange(id int64, updated models.RequestChange) (*models.RequestChange, error) {
 	if id == 0 {
 		return nil, errors.New("invalid updated ID")
 	}
-	res, err := r.db.Exec("UPDATE Activity SET OldDate = ?, NewDate = ?, Paid = ?, Approved = ?, UserID = ?, UpdateDate = ?, UpdateUserID = ? WHERE id = ?", updated.OldDate, updated.NewDate, updated.Paid, updated.Approved, updated.UserID, time.Now(), getUserId(), id)
+	res, err := r.db.Exec("UPDATE RequestChange SET OldDate = ?, NewDate = ?, Paid = ?, Approved = ?, UserID = ?, UpdateDate = ?, UpdateUserID = ? WHERE id = ?", updated.OldDate, updated.NewDate, updated.Paid, updated.Approved, updated.UserID, time.Now(), getUserId(), id)
 	if err != nil {
 		return nil, err
 	}
@@ -263,8 +295,8 @@ func (r *SQLiteRepository) UpdateActivity(id int64, updated models.Activity) (*m
 	return &updated, nil
 }
 
-func (r *SQLiteRepository) DeleteActivity(id int64) error {
-	res, err := r.db.Exec("DELETE FROM Activity WHERE id = ?", id)
+func (r *SQLiteRepository) DeleteRequestChange(id int64) error {
+	res, err := r.db.Exec("DELETE FROM RequestChange WHERE id = ?", id)
 	if err != nil {
 		return err
 	}

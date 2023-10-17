@@ -1,6 +1,8 @@
 package interfaces
 
-import "github.com/nilsonmart/we-exchange/internal/models"
+import (
+	"github.com/nilsonmart/we-exchange/internal/models"
+)
 
 type ActivityRepository interface {
 	Migrate() error

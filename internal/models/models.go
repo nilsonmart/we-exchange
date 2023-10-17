@@ -2,32 +2,36 @@ package models
 
 import "time"
 
-type Schema struct {
-	ID             int64
-	WeekDay        string
-	UserID         int64
-	CreationDate   time.Time
-	CreationUserID int64
-	UpdateDate     time.Time
-	UpdateUserID   int64
+type DBQuery struct {
+	Key   string
+	Value string
 }
 
 type Account struct {
-	ID       int64
-	Name     string
-	Email    string
-	Password string
+	ID       string `json:"_id"`
+	Name     string `json:"_name"`
+	Email    string `json:"_email"`
+	Password string `json:"_password"`
 }
 
-type Activity struct {
-	ID             int64
-	OldDate        time.Time
-	NewDate        time.Time
-	Paid           bool
-	Approved       bool
-	UserID         int64
-	CreationDate   time.Time
-	CreationUserID int64
-	UpdateDate     time.Time
-	UpdateUserID   int64
+type RequestChange struct {
+	ID             string    `json:"_id"`
+	OldDate        time.Time `json:"_olddate"`
+	NewDate        time.Time `json:"_newdate"`
+	Paid           string    `json:"_paid"`
+	Approved       string    `json:"_approved"`
+	UserID         string    `json:"_requestedfor"`
+	CreationDate   int64     `json:"_creationdate"`
+	CreationUserID string    `json:"_creationuserid"`
+	UpdateDate     int64     `json:"_updatedate"`
+	UpdateUserID   string    `json:"_updateuserid"`
+}
+
+type Schema struct {
+	ID             string `json:"_id"`
+	WeekDay        string `json:"_weekday"`
+	CreationDate   int64  `json:"_creationdate"`
+	CreationUserID string `json:"_creationuserID"`
+	UpdateDate     int64  `json:"_updatedate"`
+	UpdateUserID   string `json:"_updateuserid"`
 }
