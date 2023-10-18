@@ -14,7 +14,7 @@ import (
 //const secretKey string = "secretkey"
 
 func getSecretKey() string {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("config.env")
 	if err != nil {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
