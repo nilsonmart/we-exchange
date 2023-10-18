@@ -21,14 +21,14 @@ func router() *gin.Engine {
 
 		//check credentials
 		//TODO - REAL AUTHENTICATION VALIDATION
-		account, err := ValidateAccount(email, password)
+		isValid, err := ValidateAccount(email, password)
 		if err != nil {
 			//c.AbortWithStatus(http.StatusBadRequest)
 			//c.Redirect(http.StatusNotFound, "/")
 			c.HTML(http.StatusUnauthorized, "login.html", nil)
 		}
 
-		if account {
+		if isValid {
 			expToken := time.Now().Add(time.Hour * 24).Unix()
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 				"email": email,
@@ -60,7 +60,11 @@ func router() *gin.Engine {
 	})
 
 	r.GET("/schema", authMiddleware(), func(ctx *gin.Context) {
-		model := getSchema()
+		model, err := AllSchema()
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
 		ctx.JSON(http.StatusOK, model)
 	})
 

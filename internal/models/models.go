@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type DBQuery struct {
 	Key   string
@@ -8,30 +12,30 @@ type DBQuery struct {
 }
 
 type Account struct {
-	ID       string `json:"_id"`
-	Name     string `json:"_name"`
-	Email    string `json:"_email"`
-	Password string `json:"_password"`
+	ID       primitive.ObjectID `bson:"_id"`
+	Name     string             `bson:"_name"`
+	Email    string             `bson:"_email"`
+	Password string             `bson:"_password"`
 }
 
 type RequestChange struct {
-	ID             string    `json:"_id"`
-	OldDate        time.Time `json:"_olddate"`
-	NewDate        time.Time `json:"_newdate"`
-	Paid           string    `json:"_paid"`
-	Approved       string    `json:"_approved"`
-	UserID         string    `json:"_requestedfor"`
-	CreationDate   int64     `json:"_creationdate"`
-	CreationUserID string    `json:"_creationuserid"`
-	UpdateDate     int64     `json:"_updatedate"`
-	UpdateUserID   string    `json:"_updateuserid"`
+	ID             primitive.ObjectID `bson:"_id"`
+	OldDate        time.Time          `bson:"_olddate"`
+	NewDate        time.Time          `bson:"_newdate"`
+	Paid           string             `bson:"_paid"`
+	Approved       string             `bson:"_approved"`
+	UserID         string             `bson:"_requestedfor"`
+	CreationDate   int64              `bson:"_creationdate"`
+	CreationUserID string             `bson:"_creationuserid"`
+	UpdateDate     int64              `bson:"_updatedate"`
+	UpdateUserID   string             `bson:"_updateuserid"`
 }
 
 type Schema struct {
-	ID             string `json:"_id"`
-	WeekDay        string `json:"_weekday"`
-	CreationDate   int64  `json:"_creationdate"`
-	CreationUserID string `json:"_creationuserID"`
-	UpdateDate     int64  `json:"_updatedate"`
-	UpdateUserID   string `json:"_updateuserid"`
+	ID             primitive.ObjectID `bson:"_id"`
+	WeekDay        string             `bson:"_weekday"`
+	CreationDate   int64              `bson:"_creationdate"`
+	CreationUserID string             `bson:"_creationuserID"`
+	UpdateDate     int64              `bson:"_updatedate"`
+	UpdateUserID   string             `bson:"_updateuserid"`
 }

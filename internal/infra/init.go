@@ -1,55 +1,32 @@
 package infra
 
-// func InitSQLite() {
+import (
+	"context"
+	"fmt"
+	"os"
 
-// 	conn := ConnectionSQLite()
+	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
 
-// 	repo := repository.NewSQLiteRepository(conn)
-
-// 	if err := repo.MigrateAccount(); err != nil {
-// 		//TODO Log error
-// 		log.Fatal(err)
-// 	}
-
-// 	if err := repo.MigrateActivity(); err != nil {
-// 		//TODO Log error
-// 		log.Fatal(err)
-// 	}
-
-// 	if err := repo.MigrateSchema(); err != nil {
-// 		//TODO Log error
-// 		log.Fatal(err)
-// 	}
-
-// 	for _, v := range mockActivity() {
-// 		_, err := repo.CreateActivity(v)
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-// 	}
-
-// }
-
-// func mockActivity() []models.Activity {
-// 	list := []models.Activity{
-// 		{ID: 1, OldDate: time.Now().Add(2), NewDate: time.Now().Add(5), Paid: false, Approved: false, UserID: getUserId(), CreationDate: time.Now(), CreationUserID: getUserId()},
-// 		{ID: 2, OldDate: time.Now().Add(5), NewDate: time.Now().Add(10), Paid: true, Approved: true, UserID: 2, CreationDate: time.Now().Add(-2), CreationUserID: 2},
-// 	}
-// 	return list
-// }
-
-// func getUserId() int64 {
-// 	var c *gin.Context
-// 	userId, err := c.Cookie("userid")
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	p, err := strconv.ParseInt(userId, 10, 0)
-// 	if err != nil {
-// 		return 0
-// 	}
-
-// 	return p
-
-// }
+func InitDatabase() (*mongo.Client, bool, []byte, error) {
+	err := godotenv.Load("local.env")
+	if err != nil {
+		fmt.Printf("Not possible to get Env. Err: %s", err)
+		return nil, true, nil, err
+	}
+	db := os.Getenv("DATABASE")
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(db))
+	if err != nil {
+		fmt.Printf("Not possible to connect db. Err: %s", err)
+		return nil, true, nil, err
+	}
+	defer func() {
+		if err := client.Disconnect(context.TODO()); err != nil {
+			fmt.Printf("Some error occured. Err: %s", err)
+			panic(err)
+		}
+	}()
+	return client, false, nil, nil
+}
