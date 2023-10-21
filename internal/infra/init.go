@@ -11,7 +11,7 @@ import (
 )
 
 func InitDatabase() (*mongo.Client, bool, []byte, error) {
-	err := godotenv.Load("local.env")
+	err := godotenv.Load("config.env")
 	if err != nil {
 		fmt.Printf("Not possible to get Env. Err: %s", err)
 		return nil, true, nil, err

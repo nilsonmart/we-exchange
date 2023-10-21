@@ -18,6 +18,7 @@ var (
 	ErrNotExists    = errors.New("row not exists")
 	ErrUpdateFailed = errors.New("update failed")
 	ErrDeleteFailed = errors.New("delete failed")
+	ErrInsertFailed = errors.New("insert failed")
 )
 
 func queryAllObjectData(collection string) ([]byte, error) {
@@ -110,7 +111,7 @@ func CreateRequestChange(model models.RequestChange) (bool, error) {
 	if err != nil {
 		//TODO Log error
 		log.Fatal(err)
-		return false, err
+		return false, ErrInsertFailed
 	}
 
 	return result, nil
@@ -196,7 +197,7 @@ func CreateSchema(model models.Schema) (bool, error) {
 	if err != nil {
 		//TODO Log error
 		log.Fatal(err)
-		return false, err
+		return false, ErrInsertFailed
 	}
 
 	return result, nil
@@ -215,20 +216,6 @@ func AllSchema() ([]models.Schema, error) {
 	json.Unmarshal(query, &schema)
 
 	return schema, nil
-}
-
-func GetSchemaByID(id primitive.ObjectID) (*models.Schema, error) {
-	query, err := queryObjectDataByID("schema", id)
-	if err != nil {
-		//TODO Log Error
-		fmt.Printf("Result for query: %v and error: %v", query, err)
-		return nil, ErrNotExists
-	}
-
-	var schema models.Schema
-	json.Unmarshal(query, &schema)
-
-	return &schema, nil
 }
 
 func GetSchemaByUserID(id primitive.ObjectID) (*models.Schema, error) {
@@ -257,19 +244,4 @@ func UpdateSchema(id primitive.ObjectID, model models.Schema) (bool, error) {
 	}
 
 	return result, ErrNotExists
-}
-
-func DeleteSchema(id primitive.ObjectID) (bool, error) {
-	if id == primitive.NilObjectID {
-		return false, errors.New("invalid updated ID")
-	}
-
-	result, err := infra.DeleteObject("schema", id)
-	if err != nil {
-		//TODO Log error
-		log.Fatal(err)
-		return false, err
-	}
-
-	return result, nil
 }

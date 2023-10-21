@@ -7,6 +7,8 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+
+	"github.com/nilsonmart/we-exchange/internal/models"
 )
 
 func router() *gin.Engine {
@@ -59,15 +61,6 @@ func router() *gin.Engine {
 		c.HTML(http.StatusOK, "home.html", nil)
 	})
 
-	r.GET("/schema", authMiddleware(), func(ctx *gin.Context) {
-		model, err := AllSchema()
-		if err != nil {
-			ctx.AbortWithStatus(http.StatusBadRequest)
-			return
-		}
-		ctx.JSON(http.StatusOK, model)
-	})
-
 	//Route to render a template
 	r.GET("/", func(c *gin.Context) {
 		tokenString, err := c.Cookie("token")
@@ -85,6 +78,139 @@ func router() *gin.Engine {
 	r.GET("/logout", func(c *gin.Context) {
 		c.SetCookie("token", "", -1, "/", "localhost", false, true)
 		c.HTML(http.StatusOK, "login.html", nil)
+	})
+
+	//SCHEMA
+	r.GET("/schema", authMiddleware(), func(ctx *gin.Context) {
+		models, err := AllSchema()
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		ctx.JSON(http.StatusOK, models)
+	})
+
+	r.GET("/schema:userid", authMiddleware(), func(ctx *gin.Context) {
+		id := ctx.Param("id")
+
+		model, err := GetSchemaByUserID(id)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, model)
+	})
+
+	r.PUT("/schema:id", authMiddleware(), func(ctx *gin.Context) {
+		var model models.Schema
+		id := ctx.Param("id")
+
+		if err := ctx.BindJSON(&model); err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		isUpdated, err := UpdateSchema(id, model)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		ctx.JSON(http.StatusAccepted, isUpdated)
+	})
+
+	r.POST("/schema", authMiddleware(), func(ctx *gin.Context) {
+		var model models.Schema
+
+		if err := ctx.BindJSON(&model); err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		isUpdated, err := CreateSchema(model)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		ctx.JSON(http.StatusAccepted, isUpdated)
+	})
+
+	//REQUEST CHANGE
+	r.GET("/requestchange", authMiddleware(), func(ctx *gin.Context) {
+		models, err := AllRequestChange()
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		ctx.JSON(http.StatusOK, models)
+	})
+
+	r.GET("/requestchange:id", authMiddleware(), func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		model, err := GetRequestChangeByID(id)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, model)
+	})
+
+	r.GET("/requestchange:userid", authMiddleware(), func(ctx *gin.Context) {
+		userId := ctx.Param("userid")
+		model, err := GetRequestChangeByUserID(userId)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, model)
+	})
+
+	r.PUT("/requestchange:id", authMiddleware(), func(ctx *gin.Context) {
+		var model models.RequestChange
+		id := ctx.Param("id")
+		if err := ctx.BindJSON(&model); err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		isUpdated, err := UpdateRequestChange(id, model)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		ctx.JSON(http.StatusAccepted, isUpdated)
+
+	})
+
+	r.POST("/requestchange", authMiddleware(), func(ctx *gin.Context) {
+		var model models.RequestChange
+		if err := ctx.BindJSON(&model); err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		isUpdated, err := CreateRequestChange(model)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		ctx.JSON(http.StatusAccepted, isUpdated)
+
+	})
+
+	r.DELETE("/requestchange:id", authMiddleware(), func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		isUpdated, err := DeleteRequestChange(id)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		ctx.JSON(http.StatusAccepted, isUpdated)
 	})
 
 	return r
